@@ -1,6 +1,6 @@
 const timeElem = document.getElementById('time');
-const sessionTimeElem = document.getElementById('sessionTime');
-const sessionCountElem = document.getElementById('sessionCount');
+const sessionTimeInput = document.getElementById('sessionTime');
+const sessionCountInput = document.getElementById('sessionCount');
 
 const startButton = document.getElementById('startButton');
 const continueButton = document.getElementById('continueButton');
@@ -15,105 +15,123 @@ const time = {
     seconds: 0
 }
 
-const sessionTime = {
+const sessionInfo = {
     minutes: 0,
-    seconds: 0
+    seconds: 0,
+    count: 0
 }
 
-let sessionCount = 0
+let interval = setInterval(() => {}, 1000)
+clearInterval(interval)
 
-function start(isContinue = false) {
-    stopButton.removeEventListener('click', () => { })
+function getSessionInfo() {
+    const [minutes, seconds] = sessionTimeInput.value.split(':')
+    const count = sessionCountInput.value
 
-    if (!isContinue) {
-        const [minutes, seconds] = sessionTimeElem.value.split(':')
-        sessionCount = +sessionCountElem.value
+    if (Number(minutes) !== 0 && !Number(minutes)) return false
+    if (Number(seconds) !== 0 && !Number(seconds)) return false
+    if (!Number(count)) return false
 
-        sessionTime.minutes = +minutes
-        sessionTime.seconds = +seconds
-    }
+    sessionInfo.minutes = Number(minutes)
+    sessionInfo.seconds = Number(seconds)
+    sessionInfo.count = Number(count)
 
-    if (
-        !Number(sessionCount) ||
-        (
-            !Number(sessionTime.minutes)
-            && Number(sessionTime.minutes) !== 0
-        ) ||
-        (
-            !Number(sessionTime.seconds)
-            && Number(sessionTime.seconds) !== 0
-        )
-    ) {
-        reset()
-        return
-    }
+    return true
+}
 
-    startButton.classList.remove('show')
+function stop() {
+    clearInterval(interval)
+    stopButton.classList.remove('show')
+    continueButton.classList.add('show')
+    resetButton.classList.add('show')
+}
+
+function _continue() {
+    interval = setInterval(updateTime, 1000)
+    continueButton.classList.remove('show')
+    resetButton.classList.remove('show')
     stopButton.classList.add('show')
+}
+
+function reset() {
+    time.minutes = 0,
+    time.seconds = 0,
+    
+    clearInterval(interval)
+    updateTimeElem()
+
     resetButton.classList.remove('show')
     continueButton.classList.remove('show')
+    startButton.classList.add('show')
+}
 
-    const stop = () => {
-        stopButton.classList.remove('show')
-        continueButton.classList.add('show')
-        resetButton.classList.add('show')
+function updateTimeElem() {
+    const minutesText = time.minutes <= 10 ? '0' + time.minutes : time.minutes
+    const secondsText = time.seconds <= 10 ? '0' + time.seconds : time.seconds
 
-        continueButton.removeEventListener('click', () => { })
-        clearInterval(interval)
-        continueButton.addEventListener('click', () => start(true))
-    }
+    timeElem.innerText = `${minutesText}:${secondsText}`
+}
 
-    let interval = setInterval(() => {
-        time.seconds += 1;
+function playAudio() {
+    audioElem.play()
 
-        if (time.seconds === 60) {
-            time.seconds = 0
-            time.minutes += 1
-        }
-
-        if (time.minutes >= sessionTime.minutes && time.seconds >= sessionTime.seconds) {
-            audioElem.play()
-            sessionCount -= 1
-            stop()
-            okButton.classList.add('show')
-            okButton.addEventListener('click', ok)
-        }
-
-        updateTimeElem()
-    }, 1000)
-
-    stopButton.addEventListener('click', stop)
+    startButton.classList.remove('show')
+    resetButton.classList.remove('show')
+    continueButton.classList.remove('show')
+    okButton.classList.add('show')
 }
 
 function ok() {
     audioElem.pause()
     audioElem.currentTime = 0
-    okButton.removeEventListener('click', () => { })
-    okButton.classList.remove('show')
-    time.minutes = 0
-    time.seconds = 0
-    sessionCountElem.value = sessionCount
 
-    if (sessionCount === 0) {
-        reset()
+    okButton.classList.remove('show')
+    resetButton.classList.add('show')
+    continueButton.classList.add('show')
+
+    if (sessionInfo.count <= 0) {
+        startButton.classList.add('show')
     }
+
+    reset()
 }
 
-function reset() {
-    time.seconds = 0
-    time.minutes = 0
+function updateTime() {
+    time.seconds += 1
 
-    startButton.classList.add('show')
-    stopButton.classList.remove('show')
-    resetButton.classList.remove('show')
-    continueButton.classList.remove('show')
+    if (time.seconds >= 60) {
+        time.seconds = 0
+        time.minutes += 1
+    }
+
+    if (
+        (time.minutes >= sessionInfo.minutes)
+        &&
+        (time.seconds >= sessionInfo.seconds)
+    ) {
+        stop()
+        sessionInfo.count -= 1
+        sessionCountInput.value = sessionInfo.count
+
+        if (sessionInfo.count <= 0) reset()
+        playAudio()
+    }
 
     updateTimeElem()
 }
 
-function updateTimeElem() {
-    timeElem.innerText = `${time.minutes < 10 ? '0' + time.minutes : time.minutes}:${time.seconds < 10 ? '0' + time.seconds : time.seconds}`
+function start() {
+    const state = getSessionInfo()
+    if (!state) return
+
+    startButton.classList.remove('show')
+    stopButton.classList.add('show')
+
+    interval = setInterval(updateTime, 1000)
 }
 
-startButton.addEventListener('click', () => start(false))
+startButton.addEventListener('click', start)
+continueButton.addEventListener('click', _continue)
 resetButton.addEventListener('click', reset)
+stopButton.addEventListener('click', stop)
+okButton.addEventListener('click', ok)
