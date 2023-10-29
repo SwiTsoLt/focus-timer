@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Timer</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./script.js" defer></script>
+</head>
+<body>
+    <div class="wrapper">
+        <div id="time" class="time">
+            00:00
+        </div>
+        <p>Время сессии: <input id="sessionTime" type="text"></p>
+        <p>Кол-во сессий: <input id="sessionCount" type="text"></p>
+        <div class="buttons">
+            <button id="startButton" class="show">Старт</button>
+            <button id="continueButton">Продолжить</button>
+            <button id="stopButton">Стоп</button>
+            <button id="resetButton">Сбросить</button>
+            <button id="okButton">Ок</button>
+        </div>
+    </div>
+    <audio src="./music.mp3" controls loop></audio>
+</body>
+</html>
